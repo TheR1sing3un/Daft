@@ -10500,8 +10500,14 @@ impl ReadThrift for FileMetaData {
                     f_7 = Some(val);
                 }
                 8 => {
-                    let val = EncryptionAlgorithm::read_from_in_protocol(i_prot)?;
-                    f_8 = Some(val);
+                    if field_ident.field_type == TType::Struct {
+                        // Only files written in the encrypted version need to parse this metadata
+                        let val = EncryptionAlgorithm::read_from_in_protocol(i_prot)?;
+                        f_8 = Some(val);
+                    } else {
+                        // Compatible with parquet files written in versions that do not support encryption
+                        i_prot.skip(field_ident.field_type)?;
+                    }
                 }
                 9 => {
                     let val = i_prot.read_bytes()?;
